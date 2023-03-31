@@ -14,26 +14,7 @@ struct Edge{
     int u, v, d;
 }edge[NMAX];
 vector<int>g[NMAX];
-
-struct BitMap{
-    char a[NMAX];
-    bool operator[](int index){
-        return (a[index / 8] >> (index % 8)) & 1;
-    }
-    void set(int index){
-        a[index / 8] |=  1 << (index % 8);
-    }
-    void reset(int index){
-        a[index / 8] &=  ~(1 << (index % 8));
-    }
-    void clear(int tot){
-        memset(a, 0, tot / 8 + 1);
-    }
-    void clear(){
-        memset(a, 0, sizeof(a));
-    }
-};
-BitMap vis;
+bool vis[NMAX];
 int group[NMAX];
 bool edgePMAP[NMAX][PMAX];
 int edgePRE[NMAX];
@@ -46,10 +27,10 @@ vector<int> gShrink[NMAX];
 
 
 int bfsPRE(int s, int t){
-    vis.clear(N);
+    memset(vis, 0, N);
     queue<int>q;
     q.push(s);
-    vis.set(s);
+    vis[s]=true;
     int dis = 0;
     while(q.size()){
         int tot = q.size();
@@ -59,7 +40,7 @@ int bfsPRE(int s, int t){
             q.pop();
             for(auto i : g[x]){
                 int y = x ^ edge[i].u ^ edge[i].v;
-                if(!vis[y])vis.set(y), q.push(y);
+                if(!vis[y])vis[y]=true, q.push(y);
             }
         }
         dis++;
@@ -67,10 +48,10 @@ int bfsPRE(int s, int t){
 }
 
 int bfsSEA(int s, int t, int p){
-    vis.clear(N);
+    memset(vis, 0, N);
     queue<int>q;
     q.push(s);
-    vis.set(s);
+    vis[s]=true;
     int dis = 0;
     while(q.size()){
         int tot = q.size();
@@ -80,7 +61,7 @@ int bfsSEA(int s, int t, int p){
             q.pop();
             for(auto i : g[x]){
                 int y = x ^ edge[i].u ^ edge[i].v;
-                if(!vis[y] && !edgePMAP[i][p])vis.set(y), q.push(y);
+                if(!vis[y] && !edgePMAP[i][p])vis[y]=true, q.push(y);
             }
         }
         dis++;
@@ -89,10 +70,10 @@ int bfsSEA(int s, int t, int p){
 }
 
 void bfsSEL(int s, int t, int p){
-    vis.clear(N);
+    memset(vis, 0, N);
     queue<int>q;
     q.push(s);
-    vis.set(s);
+    vis[s]=true;
     while(q.size()){
         int tot = q.size();
         while(tot--){
@@ -102,7 +83,7 @@ void bfsSEL(int s, int t, int p){
             for(auto i : g[x]){
                 int y = x ^ edge[i].u ^ edge[i].v;
                 if(!vis[y] && !edgePMAP[i][p]){
-                    vis.set(y), q.push(y);
+                    vis[y]=true, q.push(y);
                     edgePRE[y] = i;
                 }
             }
@@ -128,12 +109,12 @@ void SelectEdge(int s, int t, int p, int stId){
 }
 
 void dfsShrinkPoint(int v, int p, int count){
-    vis.set(v);
+    vis[v]=true;
     group[v] = count;
     for(auto i : g[v]){
         int u = v ^ edge[i].u ^ edge[i].v;
         if(!vis[u] && !edgePMAP[i][p]){
-            vis.set(u);
+            vis[u]=true;
             group[u] = count;
             dfsShrinkPoint(u, p, count);
         }
@@ -141,11 +122,11 @@ void dfsShrinkPoint(int v, int p, int count){
 }
 
 int bfsSHR(int s, int t){
-    vis.clear(N);
+    memset(vis, 0, N);
     queue<int>q;
     q.push(s);
     int dis = 0;
-    vis.set(s);
+    vis[s]=true;
     while(q.size()){
         int tot = q.size();
         while(tot--){
@@ -155,7 +136,7 @@ int bfsSHR(int s, int t){
             for(auto i : gShrink[x]){
                 int y = x ^ group[edge[i].v] ^ group[edge[i].u];
                 if(!vis[y]){
-                    vis.set(y);
+                    vis[y]=true;
                     q.push(y);
                     edgePRE[y] = i;
                 }
@@ -167,7 +148,7 @@ int bfsSHR(int s, int t){
 
 
 vector<int> GetAddEdgeP(int s, int t, int p){
-    vis.clear(N);
+    memset(vis, 0, N);
     int count = 0;
     for(int i = 0; i < N; i++){
         if(!vis[i]){
