@@ -52,6 +52,7 @@ build cmake_object_order_depends_target_huawei: phony || CMakeFiles/huawei.dir
 build CMakeFiles/huawei.dir/main.cpp.o: CXX_COMPILER__huawei_Debug /home/yuki/CLionProjects/huawei/main.cpp || cmake_object_order_depends_target_huawei
   DEP_FILE = CMakeFiles/huawei.dir/main.cpp.o.d
   FLAGS = -g
+  INCLUDES = -I/home/yuki/CLionProjects/huawei/./main.cpp
   OBJECT_DIR = CMakeFiles/huawei.dir
   OBJECT_FILE_DIR = CMakeFiles/huawei.dir
 
