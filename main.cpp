@@ -2,17 +2,23 @@
 #include "unistd.h"
 using namespace std;
 typedef long long ll;
-const int NMAX = 200005;
+const int NMAX = 20005;
 const int PMAX = 100;
-int N, M, T, P, D;
-ll Y, DC, EC;
-map<pair<int, int>, int>minDis;
 struct ST{
     int s, t, minDis, id;
 }st[NMAX];
 struct Edge{
     int u, v, d;
 }edge[NMAX];
+struct DATA{
+    int N, M, T, P, D;
+    ST st[NMAX];
+    Edge edge[NMAX];
+}DATA;
+int N, M, T, P, D;
+ll Y, DC, EC;
+map<pair<int, int>, int>minDis;
+
 vector<int>g[NMAX];
 bool vis[NMAX];
 int group[NMAX];
@@ -22,8 +28,10 @@ struct ANS{
     int p;
     vector<int>edge;
     vector<int>costD;
-}Ans[NMAX];
+}Ans[NMAX], BestAns[NMAX];
+vector<Edge>AnsEdge;
 vector<int> gShrink[NMAX];
+ll BestCost = INT32_MAX;
 
 
 int bfsPRE(int s, int t){
@@ -146,7 +154,6 @@ int bfsSHR(int s, int t){
     }
 }
 
-
 vector<int> GetAddEdgeP(int s, int t, int p){
     memset(vis, 0, N);
     int count = 0;
@@ -203,6 +210,7 @@ void AddEdge(int s, int t, int stId){
 }
 
 void Search(int s, int t, int stId){
+    for(int i = 0; i < N; i++)random_shuffle(g[i].begin(), g[i].end());
     vector<pair<int ,int >>disList;
     for(int p = 0; p < P; p++){
         int dis = bfsSEA(s, t, p);
@@ -238,18 +246,47 @@ void GetCost(){
     }
 }
 
-void inData(){
-    cin >> N >> M >> T >> P >> D;
-    for(int i = 0; i < M; i++){
-        cin >> edge[i].u >> edge[i].v >> edge[i].d;
+void inDATA(){
+    cin >> DATA.N >> DATA.M >> DATA.T >> DATA.P >> DATA.D;
+    for(int i = 0; i < DATA.M; i++){
+        cin >> DATA.edge[i].u >> DATA.edge[i].v >> DATA.edge[i].d;
     }
-    for(int i = 0; i < T; i++){
-        cin >> st[i].s >> st[i].t;
+    for(int i = 0; i < DATA.T; i++){
+        cin >> DATA.st[i].s >> DATA.st[i].t;
     }
 }
 
-void Run(){
+void init(){
+    N = DATA.N;
+    M = DATA.M;
+    T = DATA.T;
+    P = DATA.P;
+    D = DATA.D;
+    for(int i = 0; i < M; i++){
+        edge[i].u = DATA.edge[i].u;
+        edge[i].v = DATA.edge[i].v;
+        edge[i].d = DATA.edge[i].d;
+    }
+    for(int i = 0; i < T; i++){
+        st[i].s = DATA.st[i].s;
+        st[i].t = DATA.st[i].t;
+    }
+    Y = 0, DC = 0, EC = 0;
+    minDis.clear();
+    for(int i = 0; i < N; i++)g[i].clear();
+    memset(vis, 0, N);
+    memset(edgePMAP, 0, sizeof(edgePMAP));
+    for(int i = 0; i < T; i++){
+        Ans[i].p = 0;
+        Ans[i].edge.clear();
+        Ans[i].costD.clear();
+    }
+    for(int i = 0; i < N; i++)gShrink[i].clear();
+    BestCost = INT32_MAX;
+}
 
+void Run(){
+    init();
     for(int i = 0; i < M; i++){
         if(!minDis[{edge[i].u, edge[i].v}])minDis[{edge[i].u, edge[i].v}] = edge[i].d;
         if(!minDis[{edge[i].v, edge[i].u}])minDis[{edge[i].v, edge[i].u}] = edge[i].d;
@@ -273,29 +310,52 @@ void Run(){
     GetCost();
 }
 
+
 void outAns(){
-    cout << Y << endl;
-    for(int i = 0; i < Y; i++){
-        cout << edge[M - Y + i].v << ' ' << edge[M - Y + i].u << endl;
+    cout << AnsEdge.size() << endl;
+    for(auto i : AnsEdge){
+        cout << i.u << ' ' << i.v << ' ' << endl;
     }
     for(int i = 0; i < T; i++){
-        cout << Ans[i].p << ' ' << Ans[i].edge.size() << ' ' << Ans[i].costD.size() << ' ';
-        for(auto j : Ans[i].edge)cout << j << ' ';
-        for(auto j : Ans[i].costD)cout << j << ' ';
+        cout << BestAns[i].p << ' ' << BestAns[i].edge.size() << ' ' << BestAns[i].costD.size() << ' ';
+        for(auto j : BestAns[i].edge)cout << j << ' ';
+        for(auto j : BestAns[i].costD)cout << j << ' ';
         cout << endl;
     }
+}
+
+ll getCost(){
+    return Y * 1000000 + DC * 100 + EC;
 }
 
 void outCost(){
     cout << "AC : " << ' ' << Y << ' ' << Y * 1000000 << endl;
     cout << "DC : " << ' ' << DC << ' ' << DC * 100 << endl;
     cout << "EC : " << ' ' << EC << ' ' << EC << endl;
-    cout << "ALL COST : " << Y * 1000000 + DC * 100 + EC << endl;
+    cout << "ALL COST : " << BestCost << endl;
 }
 
+void RUN(int num){
+    for(int i = 0; i < num; i++){
+        Run();
+        ll nowCost = getCost();
+        if(nowCost < BestCost){
+            for(int i = 0; i < T; i++){
+                BestAns[i] = Ans[i];
+            }
+            AnsEdge.clear();
+            for(int i = DATA.M; i < M; i++){
+                AnsEdge.push_back(edge[i]);
+            }
+            BestCost = nowCost;
+        }
+    }
+}
+
+
 void Work(){
-    inData();
-    Run();
+    inDATA();
+    RUN(1);
     outAns();
 }
 
@@ -331,9 +391,9 @@ int main(){
 
 
 void Test(){
-    N = 500, M = 1000, T = 10000, P = 80, D = 100;
+    DATA.N = 500, DATA.M = 1000, DATA.T = 10000, DATA.P = 80, DATA.D = 100;
     set<pair<int, int>>se;
-    for(int i = 1; i < N; i++){
+    for(int i = 1; i < DATA.N; i++){
         se.insert({rand(), i});
     }
     int pre = 0;
@@ -341,26 +401,26 @@ void Test(){
     while(!se.empty()){
         int v = se.begin()->second;
         se.erase(se.begin());
-        edge[count].u = pre, edge[count].v = v;
-        edge[count].d = rand() % D;
+        DATA.edge[count].u = pre, DATA.edge[count].v = v;
+        DATA.edge[count].d = rand() % DATA.D;
         count++;
         pre = v;
     }
-    while(count < M){
-        int x = rand() % N, y = rand() % N;
-        while(x == y)y = rand() % N;
-        edge[count].u = x, edge[count].v = y;
-        edge[count].d = rand() % D;
+    while(count < DATA.M){
+        int x = rand() % DATA.N, y = rand() % DATA.N;
+        while(x == y)y = rand() % DATA.N;
+        DATA.edge[count].u = x, DATA.edge[count].v = y;
+        DATA.edge[count].d = rand() % DATA.D;
         count++;
     }
-    for(int i = 0; i < T; i++){
-        int x = rand() % N, y = rand() % N;
-        while(x == y)y = rand() % N;
-        st[i].s = x, st[i].t = y;
+    for(int i = 0; i < DATA.T; i++){
+        int x = rand() % DATA.N, y = rand() % DATA.N;
+        while(x == y)y = rand() % DATA.N;
+        DATA.st[i].s = x, DATA.st[i].t = y;
     }
     double start = clock();
     cout << getpid()  << endl;
-    Run();
+    RUN(1);
     outCost();
     cout << (int)(clock() - start) / 1000 << endl;
 }
