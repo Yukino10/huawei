@@ -1,3 +1,5 @@
+#pragma GCC optimize(2)
+#pragma GCC optimize(3,"Ofast","inline")
 #include<bits/stdc++.h>
 #include "unistd.h"
 using namespace std;
@@ -228,7 +230,7 @@ void AddEdge(int s, int t, int stId){
 }
 
 void Search(int s, int t, int stId){
-    for(int i = 0; i < N; i++)random_shuffle(g[i], g[i] + gLen[i]);
+    //for(int i = 0; i < N; i++)random_shuffle(g[i], g[i] + gLen[i]);
     vector<pair<int ,int >>disList;
     for(int p = 0; p < P; p++){
         int dis = bfsSEA(s, t, p);
@@ -302,7 +304,6 @@ void init(){
         Ans[i].costD.clear();
     }
     for(int i = 0; i < N; i++)gShrinkLen[i] = 0;
-    BestCost = INT64_MAX;
 }
 
 void Run(){
@@ -374,7 +375,7 @@ void RUN(int num){
 
 void Work(){
     inDATA();
-    RUN(1);
+    RUN(10);
     outAns();
 }
 
