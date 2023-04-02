@@ -230,7 +230,6 @@ void AddEdge(int s, int t, int stId){
 }
 
 void Search(int s, int t, int stId){
-    //for(int i = 0; i < N; i++)random_shuffle(g[i], g[i] + gLen[i]);
     vector<pair<int ,int >>disList;
     for(int p = 0; p < P; p++){
         int dis = bfsSEA(s, t, p);
@@ -306,6 +305,8 @@ void init(){
     for(int i = 0; i < N; i++)gShrinkLen[i] = 0;
 }
 
+int Value[TMAX];
+int flag = 1;
 void Run(){
     init();
     for(int i = 0; i < M; i++){
@@ -318,7 +319,8 @@ void Run(){
     }
     for(int i = 0; i < T; i++){
         st[i].id = i;
-        st[i].minDis = bfsPRE(st[i].s, st[i].t);
+        if(flag)st[i].minDis = bfsPRE(st[i].s, st[i].t), Value[i] = st[i].minDis;
+        else st[i].minDis = Value[i];
     }
     sort(st, st + T, [](ST x, ST y){
         return x.minDis > y.minDis;
@@ -328,6 +330,7 @@ void Run(){
         Search(st[i].s, st[i].t, st[i].id);
     }
     GetCost();
+    flag = 0;
 }
 
 
@@ -375,7 +378,7 @@ void RUN(int num){
 
 void Work(){
     inDATA();
-    RUN(10);
+    RUN(20);
     outAns();
 }
 
