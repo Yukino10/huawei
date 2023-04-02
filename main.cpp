@@ -2,126 +2,138 @@
 #include "unistd.h"
 using namespace std;
 typedef long long ll;
-const int NMAX = 20005;
+const int NMAX = 5000;
+const int MMAX = 20005;
+const int TMAX = 10000;
 const int PMAX = 100;
 struct ST{
     int s, t, minDis, id;
-}st[NMAX];
+}st[TMAX];
 struct Edge{
     int u, v, d;
-}edge[NMAX];
+}edge[MMAX];
 struct DATA{
     int N, M, T, P, D;
-    ST st[NMAX];
-    Edge edge[NMAX];
+    ST st[TMAX];
+    Edge edge[MMAX];
 }DATA;
 int N, M, T, P, D;
 ll Y, DC, EC;
 map<pair<int, int>, int>minDis;
 
-vector<int>g[NMAX];
+int16_t g[NMAX][MMAX];
+int gLen[NMAX];
+
 bool vis[NMAX];
 int group[NMAX];
-bool edgePMAP[NMAX][PMAX];
+bool edgePMAP[MMAX][PMAX];
 int edgePRE[NMAX];
 struct ANS{
     int p;
     vector<int>edge;
     vector<int>costD;
-}Ans[NMAX], BestAns[NMAX];
+}Ans[TMAX], BestAns[TMAX];
 vector<Edge>AnsEdge;
-vector<int> gShrink[NMAX];
-ll BestCost = INT32_MAX;
 
+int16_t gShrink[NMAX][MMAX];
+int gShrinkLen[NMAX];
+ll BestCost = INT64_MAX;
+
+int q[NMAX];
+int l, r;
+
+void bfsOver(){
+    for(int i = 0; i < r ; i++)vis[q[i]] = false;
+    l = 0, r = 0;
+}
 
 int bfsPRE(int s, int t){
-    memset(vis, 0, N);
-    queue<int>q;
-    q.push(s);
+    q[r++] = s;
     vis[s]=true;
-    int dis = 0;
-    while(q.size()){
-        int tot = q.size();
+    int dis = 0, flag = 0;
+    while(l < r){
+        int tot = r - l;
         while(tot--){
-            int x = q.front();
-            if(x == t)return dis;
-            q.pop();
-            for(auto i : g[x]){
-                int y = x ^ edge[i].u ^ edge[i].v;
-                if(!vis[y])vis[y]=true, q.push(y);
+            int x = q[l++];
+            if(x == t){flag = 1; break;}
+            for(int i = 0; i < gLen[x]; i++){
+                int y = x ^ edge[g[x][i]].u ^ edge[g[x][i]].v;
+                if(!vis[y])vis[y]=true, q[r++] = y;
             }
         }
+        if(flag)break;
         dis++;
     }
+    bfsOver();
+    if(!flag)dis = 0;
+    return dis;
 }
 
 int bfsSEA(int s, int t, int p){
-    memset(vis, 0, N);
-    queue<int>q;
-    q.push(s);
+    q[r++] = s;
     vis[s]=true;
-    int dis = 0;
-    while(q.size()){
-        int tot = q.size();
+    int dis = 0, flag = 0;
+    while(l < r){
+        int tot = r - l;
         while(tot--){
-            int x = q.front();
-            if(x == t)return dis;
-            q.pop();
-            for(auto i : g[x]){
-                int y = x ^ edge[i].u ^ edge[i].v;
-                if(!vis[y] && !edgePMAP[i][p])vis[y]=true, q.push(y);
+            int x = q[l++];
+            if(x == t){flag = 1; break;}
+            for(int i = 0; i < gLen[x]; i++){
+                int y = x ^ edge[g[x][i]].u ^ edge[g[x][i]].v;
+                if(!vis[y] && !edgePMAP[g[x][i]][p])vis[y]=true, q[r++] = y;
             }
         }
+        if(flag)break;
         dis++;
     }
-    return 0;
+    bfsOver();
+    if(!flag)dis = 0;
+    return dis;
 }
 
-void bfsSEL(int s, int t, int p){
-    memset(vis, 0, N);
-    queue<int>q;
-    q.push(s);
+int  bfsSEL(int s, int t, int p){
+    q[r++] = s;
     vis[s]=true;
-    while(q.size()){
-        int tot = q.size();
+    int dis = 0, flag = 0;
+    while(l < r){
+        int tot = r - l;
         while(tot--){
-            int x = q.front();
-            if(x == t)return;
-            q.pop();
-            for(auto i : g[x]){
-                int y = x ^ edge[i].u ^ edge[i].v;
-                if(!vis[y] && !edgePMAP[i][p]){
-                    vis[y]=true, q.push(y);
-                    edgePRE[y] = i;
-                }
+            int x = q[l++];
+            if(x == t){flag = 1; break;}
+            for(int i = 0; i < gLen[x]; i++){
+                int y = x ^ edge[g[x][i]].u ^ edge[g[x][i]].v;
+                if(!vis[y] && !edgePMAP[g[x][i]][p])vis[y]=true, q[r++] = y, edgePRE[y] = g[x][i];
             }
         }
+        if(flag)break;
+        dis++;
     }
+    bfsOver();
+    if(!flag)dis = 0;
+    return dis;
 }
 
 void SelectEdge(int s, int t, int p, int stId){
-    bfsSEL(s, t ,p);
+    int len = bfsSEL(s, t ,p);
     int y = t;
     Ans[stId].p = p;
-    vector<int>trace;
+    Ans[stId].edge.resize(len);
+    Ans[stId].costD.resize(len);
     while(y != s){
-        trace.push_back(y);
         int preEdge = edgePRE[y];
-        Ans[stId].edge.push_back(preEdge);
+        Ans[stId].edge[--len] = preEdge;
         edgePMAP[preEdge][p] = true;
         y ^= edge[preEdge].v ^ edge[preEdge].u;
     }
-    reverse(Ans[stId].edge.begin(), Ans[stId].edge.end());
-    trace.push_back(y);
-    //for(int i = trace.size() - 1; i >= 0; i--)cout << trace[i] << ' '; cout << endl;
 }
+
 
 void dfsShrinkPoint(int v, int p, int count){
     vis[v]=true;
     group[v] = count;
-    for(auto i : g[v]){
-        int u = v ^ edge[i].u ^ edge[i].v;
-        if(!vis[u] && !edgePMAP[i][p]){
+    for(int i = 0; i < gLen[v]; i++){
+        int u = v ^ edge[g[v][i]].u ^ edge[g[v][i]].v;
+        if(!vis[u] && !edgePMAP[g[v][i]][p]){
             vis[u]=true;
             group[u] = count;
             dfsShrinkPoint(u, p, count);
@@ -130,87 +142,93 @@ void dfsShrinkPoint(int v, int p, int count){
 }
 
 int bfsSHR(int s, int t){
-    memset(vis, 0, N);
-    queue<int>q;
-    q.push(s);
-    int dis = 0;
+    q[r++] = s;
     vis[s]=true;
-    while(q.size()){
-        int tot = q.size();
+    int dis = 0, flag = 0;
+    while(l < r){
+        int tot = r - l;
         while(tot--){
-            int x = q.front();
-            if(x == t)return dis;
-            q.pop();
-            for(auto i : gShrink[x]){
-                int y = x ^ group[edge[i].v] ^ group[edge[i].u];
+            int x = q[l++];
+            if(x == t){flag = 1; break;}
+            for(int i = 0; i < gShrinkLen[x]; i++){
+                int y = x ^ group[edge[gShrink[x][i]].v] ^ group[edge[gShrink[x][i]].u];
                 if(!vis[y]){
-                    vis[y]=true;
-                    q.push(y);
-                    edgePRE[y] = i;
+                    vis[y] = true;
+                    q[r++] = y;
+                    edgePRE[y] = gShrink[x][i];
                 }
             }
         }
+        if(flag)break;
         dis++;
     }
+    bfsOver();
+    if(!flag)dis = 0;
+    return dis;
 }
 
-vector<int> GetAddEdgeP(int s, int t, int p){
-    memset(vis, 0, N);
+int AddEdgeP[PMAX][MMAX];
+int AddEdgePLen[PMAX];
+
+void GetAddEdgeP(int s, int t, int p){
     int count = 0;
     for(int i = 0; i < N; i++){
         if(!vis[i]){
             dfsShrinkPoint(i, p, count++);
         }
     }
+    memset(vis, 0, sizeof(vis));
     for(int i = 0; i < count; i++){
-        gShrink[i].clear();
+        gShrinkLen[i] = 0;
     }
     for(int i = 0; i < M; i++){
         int x = group[edge[i].v], y = group[edge[i].u];
         if(x != y){
-            gShrink[x].push_back(i);
-            gShrink[y].push_back(i);
+            gShrink[x][gShrinkLen[x]++] = i;
+            gShrink[y][gShrinkLen[y]++] = i;
         }
     }
     bfsSHR(group[s], group[t]);
-    vector<int>EdgeP;
+
+    AddEdgePLen[p] = 0;
     int y = group[t];
     while(y != group[s]){
         int preEdge = edgePRE[y];
-        EdgeP.push_back(preEdge);
+        AddEdgeP[p][AddEdgePLen[p]++] = preEdge;
         y ^= group[edge[preEdge].v] ^ group[edge[preEdge].u] ;
     }
-    return EdgeP;
 }
 
 void copyAddEdge(int fa){
     edge[M] = edge[fa];
     edge[M].d = minDis[{edge[fa].u, edge[fa].v}];
-    g[edge[fa].v].push_back(M);
-    g[edge[fa].u].push_back(M);
+    g[edge[fa].v][gLen[edge[fa].v]++] = M;
+    g[edge[fa].u][gLen[edge[fa].u]++] = M;
     M++;
     Y++;
 }
+int AddEdgeIndex[PMAX];
 void AddEdge(int s, int t, int stId){
-    vector<pair<vector<int>, int>>addEdgeP;
+    int PNum = 0;
     for(int i = 0; i < P; i++){
-        vector<int>now = GetAddEdgeP(s, t, i);
-        addEdgeP.emplace_back(now, i);
-        if(now.size() == 1)break;
+        GetAddEdgeP(s, t, i);
+        PNum++;
+        if(AddEdgePLen[i] == 1)break;
     }
-    sort(addEdgeP.begin(), addEdgeP.end(),
-         [](pair<vector<int>, int>&x ,pair<vector<int>, int>&y){
-             return x.first.size() < y.first.size();
-         });
-
-    for(int i : addEdgeP[0].first){
-        copyAddEdge(i);
+    for(int i = 0;i < P; i++){
+        AddEdgeIndex[i] = i;
     }
-    SelectEdge(s, t, addEdgeP[0].second, stId);
+    sort(AddEdgeIndex, AddEdgeIndex + PNum, [](int x, int y){
+        return AddEdgePLen[x] < AddEdgePLen[y];
+    });
+    for(int i = 0; i < AddEdgePLen[AddEdgeIndex[0]]; i++){
+        copyAddEdge(AddEdgeP[AddEdgeIndex[0]][i]);
+    }
+    SelectEdge(s, t, AddEdgeIndex[0], stId);
 }
 
 void Search(int s, int t, int stId){
-    for(int i = 0; i < N; i++)random_shuffle(g[i].begin(), g[i].end());
+    for(int i = 0; i < N; i++)random_shuffle(g[i], g[i] + gLen[i]);
     vector<pair<int ,int >>disList;
     for(int p = 0; p < P; p++){
         int dis = bfsSEA(s, t, p);
@@ -233,14 +251,16 @@ void GetCost(){
         ll cost = 0;
         int x = st[i].s;
         int stId = st[i].id;
+        int index = 0;
         for(int j = 0; j < Ans[stId].edge.size(); j++){
             cost += edge[Ans[stId].edge[j]].d;
             if(cost > D){
-                Ans[stId].costD.push_back(x);
+                Ans[stId].costD[index++] = x;
                 cost = edge[Ans[stId].edge[j]].d;
             }
             x ^= edge[Ans[stId].edge[j]].v ^ edge[Ans[stId].edge[j]].u;
         }
+        Ans[stId].costD.resize(index);
         EC += Ans[stId].edge.size();
         DC += Ans[stId].costD.size();
     }
@@ -273,7 +293,7 @@ void init(){
     }
     Y = 0, DC = 0, EC = 0;
     minDis.clear();
-    for(int i = 0; i < N; i++)g[i].clear();
+    for(int i = 0; i < N; i++)gLen[i] = 0;
     memset(vis, 0, N);
     memset(edgePMAP, 0, sizeof(edgePMAP));
     for(int i = 0; i < T; i++){
@@ -281,8 +301,8 @@ void init(){
         Ans[i].edge.clear();
         Ans[i].costD.clear();
     }
-    for(int i = 0; i < N; i++)gShrink[i].clear();
-    BestCost = INT32_MAX;
+    for(int i = 0; i < N; i++)gShrinkLen[i] = 0;
+    BestCost = INT64_MAX;
 }
 
 void Run(){
@@ -292,8 +312,8 @@ void Run(){
         if(!minDis[{edge[i].v, edge[i].u}])minDis[{edge[i].v, edge[i].u}] = edge[i].d;
         minDis[{edge[i].v, edge[i].u}] = min({minDis[{edge[i].v, edge[i].u}], minDis[{edge[i].u, edge[i].v}], edge[i].d});
         minDis[{edge[i].u, edge[i].v}] = min({minDis[{edge[i].v, edge[i].u}], minDis[{edge[i].u, edge[i].v}], edge[i].d});
-        g[edge[i].u].push_back(i);
-        g[edge[i].v].push_back(i);
+        g[edge[i].u][gLen[edge[i].u]++] = i;
+        g[edge[i].v][gLen[edge[i].v]++] = i;
     }
     for(int i = 0; i < T; i++){
         st[i].id = i;
@@ -305,7 +325,6 @@ void Run(){
     random_shuffle(st, st + T);
     for(int i = 0; i < T; i++){
         Search(st[i].s, st[i].t, st[i].id);
-        //cout << i << endl;
     }
     GetCost();
 }
@@ -364,8 +383,21 @@ void Test();
 int main(){
     ios::sync_with_stdio(0);
     cin.tie(0);cout.tie(0);
-    //Work();
-    Test();
+    Work();
+    //Test();
+//    vector<int>v;
+//    for(int i = 0; i < NMAX; i++)v.push_back(i);
+//    int a[NMAX];
+//    double start = clock();
+//    for(int i = 0; i < 1000000; i++){
+//        for(auto j : v){
+//            int x = j;
+//        }
+//        for(int j = 0; j < NMAX; j++){
+//            int x = v[j];
+//        }
+//    }
+//    cout << (int)(clock() - start) / 1000 << endl;
 }
 /*
 7 10 6 4 6
@@ -391,7 +423,7 @@ int main(){
 
 
 void Test(){
-    DATA.N = 500, DATA.M = 1000, DATA.T = 10000, DATA.P = 80, DATA.D = 100;
+    DATA.N = 500, DATA.M = 5000, DATA.T = 10000, DATA.P = 80, DATA.D = 100;
     set<pair<int, int>>se;
     for(int i = 1; i < DATA.N; i++){
         se.insert({rand(), i});
