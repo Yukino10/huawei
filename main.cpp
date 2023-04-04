@@ -248,6 +248,10 @@ void Search(int s, int t, int stId){
 }
 
 void GetCost(){
+
+
+
+
     for(int i = 0; i < T; i++){
         ll cost = 0;
         int x = st[i].s;
@@ -317,18 +321,24 @@ void Run(){
         g[edge[i].u][gLen[edge[i].u]++] = i;
         g[edge[i].v][gLen[edge[i].v]++] = i;
     }
+    for(int i = 0; i < N; i++){
+        sort(g[i], g[i] + gLen[i], [](int x, int y){
+            return edge[x].d > edge[y].d;
+        });
+    }
     for(int i = 0; i < T; i++){
         st[i].id = i;
         if(flag)st[i].minDis = bfsPRE(st[i].s, st[i].t), Value[i] = st[i].minDis;
         else st[i].minDis = Value[i];
     }
     sort(st, st + T, [](ST x, ST y){
-        return x.minDis > y.minDis;
+        return x.minDis < y.minDis;
     });
     random_shuffle(st, st + T);
     for(int i = 0; i < T; i++){
         Search(st[i].s, st[i].t, st[i].id);
     }
+
     GetCost();
     flag = 0;
 }
@@ -378,7 +388,7 @@ void RUN(int num){
 
 void Work(){
     inDATA();
-    RUN(20);
+    RUN(50);
     outAns();
 }
 
