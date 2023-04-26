@@ -249,7 +249,38 @@ void Search(int s, int t, int stId){
 
 void GetCost(){
 
+    map<pair<int, int>, vector<priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>>>>ma;
 
+    for(int i = 0; i < M; i++){
+        int x = edge[i].u, y = edge[i].v;
+        if(x > y)swap(x, y);
+        if(ma.find({x, y}) == ma.end()){
+            vector<priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>>> v;
+            for(int j = 0; j < P; j++){
+                priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> z;
+                v.push_back(z);
+            }
+            ma[{x, y}] = v;
+        }
+        for(int j = 0; j < P; j++){
+            if(!edgePMAP[i][j])ma[{x, y}][j].push({edge[i].d, i});
+        }
+    }
+
+    for(int i = 0; i < T; i++){
+        for(int j = 0; j < Ans[i].edge.size(); j++){
+            int x = edge[Ans[i].edge[j]].u, y = edge[Ans[i].edge[j]].v;
+            if(x > y)swap(x, y);
+            if(!ma[{x, y}][Ans[i].p].empty()){
+                pair<int, int> z = ma[{x, y}][Ans[i].p].top();
+                if(z.first < edge[Ans[i].edge[j]].d){
+                    ma[{x, y}][Ans[i].p].pop();
+                    ma[{x, y}][Ans[i].p].push({edge[Ans[i].edge[j]].d, Ans[i].edge[j]});
+                    Ans[i].edge[j] = z.second;
+                }
+            }
+        }
+    }
 
 
     for(int i = 0; i < T; i++){
@@ -309,8 +340,6 @@ void init(){
     for(int i = 0; i < N; i++)gShrinkLen[i] = 0;
 }
 
-int Value[TMAX];
-int flag = 1;
 void Run(){
     init();
     for(int i = 0; i < M; i++){
@@ -323,24 +352,22 @@ void Run(){
     }
     for(int i = 0; i < N; i++){
         sort(g[i], g[i] + gLen[i], [](int x, int y){
-            return edge[x].d > edge[y].d;
+            return edge[x].d < edge[y].d;
         });
     }
     for(int i = 0; i < T; i++){
         st[i].id = i;
-        if(flag)st[i].minDis = bfsPRE(st[i].s, st[i].t), Value[i] = st[i].minDis;
-        else st[i].minDis = Value[i];
+//        if(flag)st[i].minDis = bfsPRE(st[i].s, st[i].t), Value[i] = st[i].minDis;
+//        else st[i].minDis = Value[i];
     }
-    sort(st, st + T, [](ST x, ST y){
-        return x.minDis < y.minDis;
-    });
+//    sort(st, st + T, [](ST x, ST y){
+//        return x.minDis > y.minDis;
+//    });
     random_shuffle(st, st + T);
     for(int i = 0; i < T; i++){
         Search(st[i].s, st[i].t, st[i].id);
     }
-
     GetCost();
-    flag = 0;
 }
 
 
@@ -368,8 +395,14 @@ void outCost(){
     cout << "ALL COST : " << BestCost << endl;
 }
 
-void RUN(int num){
-    for(int i = 0; i < num; i++){
+
+std::chrono::milliseconds Now() {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+}
+
+void RUN(){
+    std::chrono::milliseconds start = Now();
+    while (1){
         Run();
         ll nowCost = getCost();
         if(nowCost < BestCost){
@@ -382,13 +415,15 @@ void RUN(int num){
             }
             BestCost = nowCost;
         }
+        //if((Now() - start).count() > 117000)break;
+        break;
     }
 }
 
 
 void Work(){
     inDATA();
-    RUN(50);
+    RUN();
     outAns();
 }
 
@@ -397,8 +432,8 @@ void Test();
 int main(){
     ios::sync_with_stdio(0);
     cin.tie(0);cout.tie(0);
-    Work();
-    //Test();
+    //Work();
+    Test();
 //    vector<int>v;
 //    for(int i = 0; i < NMAX; i++)v.push_back(i);
 //    int a[NMAX];
@@ -431,13 +466,11 @@ int main(){
 2 4
 2 4
 2 4
-
-
  */
 
 
 void Test(){
-    DATA.N = 500, DATA.M = 5000, DATA.T = 10000, DATA.P = 80, DATA.D = 100;
+    DATA.N = 1000, DATA.M = 1550, DATA.T = 10000, DATA.P = 80, DATA.D = 100;
     set<pair<int, int>>se;
     for(int i = 1; i < DATA.N; i++){
         se.insert({rand(), i});
@@ -466,7 +499,7 @@ void Test(){
     }
     double start = clock();
     cout << getpid()  << endl;
-    RUN(1);
+    RUN();
     outCost();
     cout << (int)(clock() - start) / 1000 << endl;
 }
