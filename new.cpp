@@ -366,7 +366,21 @@ void Run(){
 //        std::cout << st[i].minDis << std::endl;
 //    }
     //random_shuffle(st, st + T);
+    int grain = T / 30;
+    grain++;
     for(int i = 0; i < T; i++){
+        if(i && i % grain == 0){
+            for(int k = i; k < T; k++){
+                st[k].minDis = 1e9;
+                for(int p = 0; p < P; p++){
+                    int now = bfsSEA(st[k].s, st[k].t, p);
+                    if(!now)st[k].minDis = min(st[k].minDis, now);
+                }
+            }
+            sort(st + i, st + T, [](ST x, ST y){
+                return x.minDis < y.minDis;
+            });
+        }
         Search(st[i].s, st[i].t, st[i].id);
     }
     GetCost();
@@ -435,8 +449,8 @@ void Test();
 int main(){
     ios::sync_with_stdio(0);
     cin.tie(0);cout.tie(0);
-    //Work();
-    Test();
+    Work();
+    //Test();
 //    vector<int>v;
 //    for(int i = 0; i < NMAX; i++)v.push_back(i);
 //    int a[NMAX];
@@ -469,6 +483,7 @@ int main(){
 2 4
 2 4
 2 4
+
  */
 
 

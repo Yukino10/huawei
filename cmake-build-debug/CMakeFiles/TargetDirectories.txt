@@ -1,3 +1,4 @@
 /home/yuki/CLionProjects/huawei/cmake-build-debug/CMakeFiles/huawei.dir
+/home/yuki/CLionProjects/huawei/cmake-build-debug/CMakeFiles/new.dir
 /home/yuki/CLionProjects/huawei/cmake-build-debug/CMakeFiles/edit_cache.dir
 /home/yuki/CLionProjects/huawei/cmake-build-debug/CMakeFiles/rebuild_cache.dir

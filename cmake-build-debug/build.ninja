@@ -72,6 +72,38 @@ build huawei: CXX_EXECUTABLE_LINKER__huawei_Debug CMakeFiles/huawei.dir/main.cpp
   TARGET_FILE = huawei
   TARGET_PDB = huawei.dbg
 
+# =============================================================================
+# Object build statements for EXECUTABLE target new
+
+
+#############################################
+# Order-only phony target for new
+
+build cmake_object_order_depends_target_new: phony || CMakeFiles/new.dir
+
+build CMakeFiles/new.dir/new.cpp.o: CXX_COMPILER__new_Debug /home/yuki/CLionProjects/huawei/new.cpp || cmake_object_order_depends_target_new
+  DEP_FILE = CMakeFiles/new.dir/new.cpp.o.d
+  FLAGS = -g
+  INCLUDES = -I/home/yuki/CLionProjects/huawei/./main.cpp
+  OBJECT_DIR = CMakeFiles/new.dir
+  OBJECT_FILE_DIR = CMakeFiles/new.dir
+
+
+# =============================================================================
+# Link build statements for EXECUTABLE target new
+
+
+#############################################
+# Link the executable new
+
+build new: CXX_EXECUTABLE_LINKER__new_Debug CMakeFiles/new.dir/new.cpp.o
+  FLAGS = -g
+  OBJECT_DIR = CMakeFiles/new.dir
+  POST_BUILD = :
+  PRE_LINK = :
+  TARGET_FILE = new
+  TARGET_PDB = new.dbg
+
 
 #############################################
 # Utility command for edit_cache
@@ -107,7 +139,7 @@ build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 #############################################
 # Folder: /home/yuki/CLionProjects/huawei/cmake-build-debug
 
-build all: phony huawei
+build all: phony huawei new
 
 # =============================================================================
 # Built-in targets

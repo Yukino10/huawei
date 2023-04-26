@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/new.dir/new.cpp.o -o new 

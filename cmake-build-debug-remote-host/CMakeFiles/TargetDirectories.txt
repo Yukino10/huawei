@@ -1,0 +1,4 @@
+/home/zhanglong/tmp/tmp.pX9NA9ANVn/cmake-build-debug-remote-host/CMakeFiles/huawei.dir
+/home/zhanglong/tmp/tmp.pX9NA9ANVn/cmake-build-debug-remote-host/CMakeFiles/new.dir
+/home/zhanglong/tmp/tmp.pX9NA9ANVn/cmake-build-debug-remote-host/CMakeFiles/edit_cache.dir
+/home/zhanglong/tmp/tmp.pX9NA9ANVn/cmake-build-debug-remote-host/CMakeFiles/rebuild_cache.dir

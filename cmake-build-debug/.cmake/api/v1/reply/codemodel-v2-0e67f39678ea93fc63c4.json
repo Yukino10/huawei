@@ -15,7 +15,8 @@
 					"source" : ".",
 					"targetIndexes" : 
 					[
-						0
+						0,
+						1
 					]
 				}
 			],
@@ -30,7 +31,8 @@
 					"name" : "huawei",
 					"targetIndexes" : 
 					[
-						0
+						0,
+						1
 					]
 				}
 			],
@@ -41,6 +43,13 @@
 					"id" : "huawei::@6890427a1f51a3e7e1df",
 					"jsonFile" : "target-huawei-Debug-18b728d68f3231f39d91.json",
 					"name" : "huawei",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "new::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-new-Debug-5b1a626f59899a082a2f.json",
+					"name" : "new",
 					"projectIndex" : 0
 				}
 			]
