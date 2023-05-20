@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="Remote Host (5c5c311a-43dc-42c8-b90d-334cdeabb9d4)" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
       <paths name="Remote Host (5c5c311a-43dc-42c8-b90d-334cdeabb9d4)">
         <serverdata>
@@ -14,5 +14,6 @@
         </serverdata>
       </paths>
     </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
   </component>
 </project>

@@ -45,8 +45,7 @@ ll BestCost = INT64_MAX;
 int BestAc, BestDc, BestEc;
 
 bool Merge = false, startPoint = false, allPoint = false;
-bool hungary = true, allHungary = true;
-
+bool hungary = true, aloneHungary = false, allHungary = true;
 
 int WhichAns[MMAX][PMAX];
 int q[NMAX];
@@ -214,7 +213,9 @@ void GetAddEdgeP(int s, int t, int p){
     }
 }
 
-bool findOtherEdge(int s, int t, int exchangeEdge, int p, int stId){
+bool findOtherEdge(int s, int t, int exchangeEdge, int p, int stId, int high){
+    std::cout << s << ' ' << t << ' ' << high << std::endl;
+    if(high == 0)return false;
     int ansStId = WhichAns[exchangeEdge][p];
 //    if(group[Ans[ansStId].s] != group[Ans[ansStId].t]){
 //        return false;
@@ -225,6 +226,22 @@ bool findOtherEdge(int s, int t, int exchangeEdge, int p, int stId){
     }
     SelectEdge(s, t, p, stId);
     if(bfsSEA(nowAns.s, nowAns.t, p) == 0){
+        GetAddEdgeP(nowAns.s, nowAns.t, p);
+        if(AddEdgePLen[p] == 1){
+            vector<int>exchange;
+            for(int j = 0; j < gShrinkLen[group[nowAns.s]]; j++){
+                int e = gShrink[group[nowAns.s]][j];
+                if((group[nowAns.s] == group[edge[e].u] && group[edge[e].v] == group[nowAns.t]) ||
+                   (group[nowAns.t] == group[edge[e].u] && group[edge[e].v] == group[nowAns.s])){
+                    exchange.push_back(e);
+                }
+            }
+            for(auto e : exchange){
+                if(findOtherEdge(nowAns.s, nowAns.t, e, p, ansStId, high - 1)){
+                    return true;
+                }
+            }
+        }
         for(auto i : Ans[stId].edge){
             edgePMAP[i][p] = false;
         }
@@ -254,28 +271,34 @@ void copyAddEdge(int fa){
 int AddEdgeIndex[PMAX];
 void AddEdge(int s, int t, int stId){
     int PNum = 0;
-    for(int i = 0; i < P; i++){
-        GetAddEdgeP(s, t, i);
+    for(int p = 0; p < P; p++){
+        GetAddEdgeP(s, t, p);
         PNum++;
         if(hungary){
-            if(AddEdgePLen[i] == 1){
-                if(findOtherEdge(s, t, AddEdgeP[i][0], i, stId)){
-                    return;
+            if(AddEdgePLen[p] == 1){
+                if(aloneHungary){
+                    if(findOtherEdge(s, t, AddEdgeP[p][0], p, stId, 1)){
+                        return;
+                    }
                 }
                 if(allHungary){
+                    vector<int>exchange;
                     for(int j = 0; j < gShrinkLen[group[s]]; j++){
                         int e = gShrink[group[s]][j];
                         if((group[s] == group[edge[e].u] && group[edge[e].v] == group[t]) ||
                            (group[t] == group[edge[e].u] && group[edge[e].v] == group[s])){
-                            if(findOtherEdge(s, t, e, i, stId)){
-                                return;
-                            }
+                            exchange.push_back(e);
+                        }
+                    }
+                    for(auto e : exchange){
+                        if(findOtherEdge(s, t, e, p, stId, 12)){
+                            return;
                         }
                     }
                 }
             }
         } else {
-            if(AddEdgePLen[i] == 1){
+            if(AddEdgePLen[p] == 1){
                 break;
             }
         }
@@ -286,6 +309,7 @@ void AddEdge(int s, int t, int stId){
     sort(AddEdgeIndex, AddEdgeIndex + PNum, [](int x, int y){
         return AddEdgePLen[x] < AddEdgePLen[y];
     });
+    std::cout << "fuck" << std::endl;
     for(int i = 0; i < AddEdgePLen[AddEdgeIndex[0]]; i++){
         copyAddEdge(AddEdgeP[AddEdgeIndex[0]][i]);
     }
@@ -294,10 +318,12 @@ void AddEdge(int s, int t, int stId){
 
 void Search(int s, int t, int stId){
     vector<pair<int ,int >>disList;
+
     for(int p = 0; p < P; p++){
         int dis = bfsSEA(s, t, p);
         if(dis){
             disList.emplace_back(dis, p);
+            if(dis == 1)break;
         }
     }
     sort(disList.begin(), disList.end(), [](pair<int, int >x, pair<int ,int >y){
@@ -511,8 +537,8 @@ std::chrono::milliseconds Now() {
 }
 
 void RUN(){
-    std::chrono::milliseconds start = Now(), pre = Now();
-    int64_t maxTime = 0;
+    std::chrono::milliseconds start = Now();
+    int64_t allTime = 0;
     while (1){
         Run();
         ll nowCost = getCost();
@@ -529,10 +555,9 @@ void RUN(){
             BestDc = DC;
             BestEc = EC;
         }
-        maxTime = max((Now() - pre).count() + 500, maxTime);
-        pre = Now();
-        if((Now() - start).count() > 120000 - maxTime)break;
-        //break;
+        if(allTime == 0)allTime = (Now() - start).count(), allTime += 500;
+        if((Now() - start).count() > 120000 - allTime)break;
+        break;
     }
 }
 
@@ -548,8 +573,8 @@ void Test();
 int main(){
     ios::sync_with_stdio(0);
     cin.tie(0);cout.tie(0);
-    Work();
-    //Test();
+    //Work();
+    Test();
 //    vector<int>v;
 //    for(int i = 0; i < NMAX; i++)v.push_back(i);
 //    int a[NMAX];

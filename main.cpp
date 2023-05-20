@@ -10,6 +10,7 @@ const int TMAX = 10000;
 const int PMAX = 100;
 struct ST{
     int s, t, minDis, id;
+    bool fan;
 }st[TMAX];
 struct Edge{
     int u, v, d;
@@ -34,15 +35,24 @@ struct ANS{
     int p;
     vector<int>edge;
     vector<int>costD;
+    int s, t;
 }Ans[TMAX], BestAns[TMAX];
 vector<Edge>AnsEdge;
 
 int16_t gShrink[NMAX][MMAX];
 int gShrinkLen[NMAX];
 ll BestCost = INT64_MAX;
+int BestAc, BestDc, BestEc;
 
+bool Merge = false, startPoint = false, allPoint = false;
+bool hungary = true, aloneHungary = true, allHungary = false;
+int maxHigh = 2, maxFindNum = 2000;
+
+int WhichAns[MMAX][PMAX];
 int q[NMAX];
 int l, r;
+
+
 
 void bfsOver(){
     for(int i = 0; i < r ; i++)vis[q[i]] = false;
@@ -121,10 +131,13 @@ void SelectEdge(int s, int t, int p, int stId){
     Ans[stId].p = p;
     Ans[stId].edge.resize(len);
     Ans[stId].costD.resize(len);
+    Ans[stId].s = s;
+    Ans[stId].t = t;
     while(y != s){
         int preEdge = edgePRE[y];
         Ans[stId].edge[--len] = preEdge;
         edgePMAP[preEdge][p] = true;
+        WhichAns[preEdge][p] = stId;
         y ^= edge[preEdge].v ^ edge[preEdge].u;
     }
 }
@@ -172,6 +185,10 @@ int bfsSHR(int s, int t){
 int AddEdgeP[PMAX][MMAX];
 int AddEdgePLen[PMAX];
 
+int NowAddEdgeP[PMAX][MMAX];
+int NowAddEdgePLen[PMAX];
+
+
 void GetAddEdgeP(int s, int t, int p){
     int count = 0;
     for(int i = 0; i < N; i++){
@@ -201,6 +218,61 @@ void GetAddEdgeP(int s, int t, int p){
     }
 }
 
+int64_t nowFindNum;
+
+bool findOtherEdge(int s, int t, int exchangeEdge, int p, int stId, int high){
+    if(high == maxHigh){
+        return false;
+    }
+    if(nowFindNum == maxFindNum){
+        return false;
+    }
+
+    nowFindNum++;
+
+    int ansStId = WhichAns[exchangeEdge][p];
+    ANS nowAns = Ans[ansStId];
+    for(auto i : nowAns.edge){
+        edgePMAP[i][p] = false;
+    }
+    SelectEdge(s, t, p, stId);
+    if(bfsSEA(nowAns.s, nowAns.t, p) == 0){
+        if(allHungary){
+            GetAddEdgeP(nowAns.s, nowAns.t, p);
+            if(AddEdgePLen[p] == 1){
+                vector<int>exchange;
+                exchange.reserve(gShrinkLen[group[nowAns.s]]);
+                for(int j = 0; j < gShrinkLen[group[nowAns.s]]; j++){
+                    int e = gShrink[group[nowAns.s]][j];
+                    if((group[nowAns.s] == group[edge[e].u] && group[edge[e].v] == group[nowAns.t]) ||
+                       (group[nowAns.t] == group[edge[e].u] && group[edge[e].v] == group[nowAns.s])){
+                        exchange.push_back(e);
+                    }
+                }
+                for(auto e : exchange){
+                    if(findOtherEdge(nowAns.s, nowAns.t, e, p, ansStId, high + 1)){
+                        return true;
+                    }
+                }
+            }
+        }
+        for(auto i : Ans[stId].edge){
+            edgePMAP[i][p] = false;
+        }
+        Ans[stId].edge.clear();
+        Ans[ansStId] = nowAns;
+        for(auto i : nowAns.edge){
+            edgePMAP[i][p] = true;
+            WhichAns[i][p] = ansStId;
+        }
+        return false;
+    } else {
+        Ans[ansStId].edge.clear();
+        SelectEdge(nowAns.s, nowAns.t, p, ansStId);
+        return true;
+    }
+}
+
 void copyAddEdge(int fa){
     edge[M] = edge[fa];
     edge[M].d = minDis[{edge[fa].u, edge[fa].v}];
@@ -209,32 +281,68 @@ void copyAddEdge(int fa){
     M++;
     Y++;
 }
+
 int AddEdgeIndex[PMAX];
 void AddEdge(int s, int t, int stId){
     int PNum = 0;
-    for(int i = 0; i < P; i++){
-        GetAddEdgeP(s, t, i);
+    for(int p = 0; p < P; p++){
+        GetAddEdgeP(s, t, p);
+        NowAddEdgePLen[p] = AddEdgePLen[p];
+        for(int i = 0; i < NowAddEdgePLen[p]; i++){
+            NowAddEdgeP[p][i] = AddEdgeP[p][i];
+        }
         PNum++;
-        if(AddEdgePLen[i] == 1)break;
+        if(hungary){
+            if(AddEdgePLen[p] == 1){
+                nowFindNum = 0;
+                if(aloneHungary){
+                    if(findOtherEdge(s, t, AddEdgeP[p][0], p, stId, 0)){
+                        return;
+                    }
+                }
+                if(allHungary){
+                    vector<int>exchange;
+                    exchange.reserve(gShrinkLen[group[s]]);
+                    for(int j = 0; j < gShrinkLen[group[s]]; j++){
+                        int e = gShrink[group[s]][j];
+                        if((group[s] == group[edge[e].u] && group[edge[e].v] == group[t]) ||
+                           (group[t] == group[edge[e].u] && group[edge[e].v] == group[s])){
+                            exchange.push_back(e);
+                        }
+                    }
+                    for(auto e : exchange){
+                        if(findOtherEdge(s, t, e, p, stId, 0)){
+                            return;
+                        }
+                    }
+                }
+            }
+        } else {
+            if(AddEdgePLen[p] == 1){
+                break;
+            }
+        }
     }
     for(int i = 0;i < P; i++){
         AddEdgeIndex[i] = i;
     }
     sort(AddEdgeIndex, AddEdgeIndex + PNum, [](int x, int y){
-        return AddEdgePLen[x] < AddEdgePLen[y];
+        return NowAddEdgePLen[x] < NowAddEdgePLen[y];
     });
-    for(int i = 0; i < AddEdgePLen[AddEdgeIndex[0]]; i++){
-        copyAddEdge(AddEdgeP[AddEdgeIndex[0]][i]);
+    for(int i = 0; i < NowAddEdgePLen[AddEdgeIndex[0]]; i++){
+        copyAddEdge(NowAddEdgeP[AddEdgeIndex[0]][i]);
     }
     SelectEdge(s, t, AddEdgeIndex[0], stId);
 }
 
 void Search(int s, int t, int stId){
     vector<pair<int ,int >>disList;
+
     for(int p = 0; p < P; p++){
         int dis = bfsSEA(s, t, p);
         if(dis){
             disList.emplace_back(dis, p);
+            if(dis == 1)break;
         }
     }
     sort(disList.begin(), disList.end(), [](pair<int, int >x, pair<int ,int >y){
@@ -284,9 +392,13 @@ void GetCost(){
 
 
     for(int i = 0; i < T; i++){
+        int stId = st[i].id;
+        if(st[i].fan){
+            swap(st[i].s, st[i].t);
+            reverse(Ans[stId].edge.begin(), Ans[stId].edge.end());
+        }
         ll cost = 0;
         int x = st[i].s;
-        int stId = st[i].id;
         int index = 0;
         for(int j = 0; j < Ans[stId].edge.size(); j++){
             cost += edge[Ans[stId].edge[j]].d;
@@ -326,12 +438,20 @@ void init(){
     for(int i = 0; i < T; i++){
         st[i].s = DATA.st[i].s;
         st[i].t = DATA.st[i].t;
+        st[i].fan = false;
+        if(Merge){
+            if(st[i].t > st[i].s){
+                swap(st[i].s, st[i].t);
+                st[i].fan = true;
+            }
+        }
     }
     Y = 0, DC = 0, EC = 0;
     minDis.clear();
     for(int i = 0; i < N; i++)gLen[i] = 0;
     memset(vis, 0, N);
     memset(edgePMAP, 0, sizeof(edgePMAP));
+    memset(WhichAns, 0, sizeof(WhichAns));
     for(int i = 0; i < T; i++){
         Ans[i].p = 0;
         Ans[i].edge.clear();
@@ -357,17 +477,50 @@ void Run(){
     }
     for(int i = 0; i < T; i++){
         st[i].id = i;
-        st[i].minDis = bfsPRE(st[i].s, st[i].t);
     }
-    sort(st, st + T, [](ST x, ST y){
-        return x.minDis < y.minDis;
-    });
-//    for(int i = 0; i < T; i++){
-//        std::cout << st[i].minDis << std::endl;
-//    }
-    //random_shuffle(st, st + T);
-    for(int i = 0; i < T; i++){
-        Search(st[i].s, st[i].t, st[i].id);
+    if(startPoint){
+        vector<int>v[N];
+        for(int i = 0; i < T; i++)v[st[i].s].push_back(i);
+        vector<int>index;
+        for(int i = 0; i < N; i++){
+            if(v[i].size()){
+                random_shuffle(v[i].begin(), v[i].end());
+                index.push_back(i);
+            }
+        }
+        random_shuffle(index.begin(), index.end());
+        for(auto i : index){
+            for(auto j : v[i]){
+                Search(st[j].s, st[j].t, st[j].id);
+            }
+        }
+    } else if(allPoint){
+        map<pair<int, int>, int>ma;
+        for(int i = 0; i < T; i++){
+            ma[{st[i].s, st[i].t}] = i;
+        }
+        vector<int>v[T];
+        for(int i = 0; i < T; i++){
+            v[ma[{st[i].s, st[i].t}]].push_back(i);
+        }
+        for(int i = 0; i < T; i++){
+            if(v[i].size())random_shuffle(v[i].begin(), v[i].end());
+        }
+        vector<int>index;
+        for(int i = 0; i < T; i++){
+            if(v[i].size())index.push_back(i);
+        }
+        random_shuffle(index.begin(), index.end());
+        for(auto i : index){
+            for(auto j : v[i]){
+                Search(st[j].s, st[j].t, st[j].id);
+            }
+        }
+    } else {
+        random_shuffle(st, st + T);
+        for(int i = 0; i < T; i++){
+            Search(st[i].s, st[i].t, st[i].id);
+        }
     }
     GetCost();
 }
@@ -391,9 +544,9 @@ ll getCost(){
 }
 
 void outCost(){
-    cout << "AC : " << ' ' << Y << ' ' << Y * 1000000 << endl;
-    cout << "DC : " << ' ' << DC << ' ' << DC * 100 << endl;
-    cout << "EC : " << ' ' << EC << ' ' << EC << endl;
+    cout << "AC : " << ' ' << BestAc << ' ' << BestAc * 1000000 << endl;
+    cout << "DC : " << ' ' << BestDc << ' ' << BestDc * 100 << endl;
+    cout << "EC : " << ' ' << BestEc << ' ' << BestEc << endl;
     cout << "ALL COST : " << BestCost << endl;
 }
 
@@ -403,9 +556,11 @@ std::chrono::milliseconds Now() {
 }
 
 void RUN(){
-    std::chrono::milliseconds start = Now();
-    int t = 1;
-    while (t--){
+    std::chrono::milliseconds start = Now(), pre = Now();
+    int64_t maxTime = 0;
+    int64_t maxTime2 = 0;
+    allHungary = false, aloneHungary = true;
+    {
         Run();
         ll nowCost = getCost();
         if(nowCost < BestCost){
@@ -417,9 +572,38 @@ void RUN(){
                 AnsEdge.push_back(edge[i]);
             }
             BestCost = nowCost;
+            BestAc = Y;
+            BestDc = DC;
+            BestEc = EC;
         }
-        if((Now() - start).count() > 117000)break;
-        //break;
+        maxTime2 = (Now() - pre).count() + 500;
+        pre = Now();
+    }
+    allHungary = true, aloneHungary = false;
+    while (1){
+        Run();
+        ll nowCost = getCost();
+        if(nowCost < BestCost){
+            for(int i = 0; i < T; i++){
+                BestAns[i] = Ans[i];
+            }
+            AnsEdge.clear();
+            for(int i = DATA.M; i < M; i++){
+                AnsEdge.push_back(edge[i]);
+            }
+            BestCost = nowCost;
+            BestAc = Y;
+            BestDc = DC;
+            BestEc = EC;
+        }
+        maxTime = max((Now() - pre).count() + 500, maxTime);
+        pre = Now();
+        if((Now() - start).count() > 120000 - maxTime){
+            allHungary = false, aloneHungary = true;
+            if((Now() - start).count() > 120000 - maxTime2){
+                break;
+            }
+        }
     }
 }
 
@@ -435,21 +619,8 @@ void Test();
 int main(){
     ios::sync_with_stdio(0);
     cin.tie(0);cout.tie(0);
-    //Work();
-    Test();
-//    vector<int>v;
-//    for(int i = 0; i < NMAX; i++)v.push_back(i);
-//    int a[NMAX];
-//    double start = clock();
-//    for(int i = 0; i < 1000000; i++){
-//        for(auto j : v){
-//            int x = j;
-//        }
-//        for(int j = 0; j < NMAX; j++){
-//            int x = v[j];
-//        }
-//    }
-//    cout << (int)(clock() - start) / 1000 << endl;
+    Work();
+    //Test();
 }
 /*
 7 10 6 4 6
@@ -469,11 +640,12 @@ int main(){
 2 4
 2 4
 2 4
+
  */
 
 
 void Test(){
-    DATA.N = 200, DATA.M = 300, DATA.T = 10000, DATA.P = 80, DATA.D = 100;
+    DATA.N = 200, DATA.M = 550, DATA.T = 10000, DATA.P = 80, DATA.D = 100;
     set<pair<int, int>>se;
     for(int i = 1; i < DATA.N; i++){
         se.insert({rand(), i});
@@ -484,7 +656,7 @@ void Test(){
         int v = se.begin()->second;
         se.erase(se.begin());
         DATA.edge[count].u = pre, DATA.edge[count].v = v;
-        DATA.edge[count].d = rand() % DATA.D;
+        DATA.edge[count].d = (rand() &1) * DATA.D;
         count++;
         pre = v;
     }

@@ -216,9 +216,9 @@ void GetAddEdgeP(int s, int t, int p){
 
 bool findOtherEdge(int s, int t, int exchangeEdge, int p, int stId){
     int ansStId = WhichAns[exchangeEdge][p];
-//    if(group[Ans[ansStId].s] != group[Ans[ansStId].t]){
-//        return false;
-//    }
+    if(group[Ans[ansStId].s] != group[Ans[ansStId].t]){
+        return false;
+    }
     ANS nowAns = Ans[ansStId];
     for(auto i : nowAns.edge){
         edgePMAP[i][p] = false;
@@ -511,8 +511,8 @@ std::chrono::milliseconds Now() {
 }
 
 void RUN(){
-    std::chrono::milliseconds start = Now(), pre = Now();
-    int64_t maxTime = 0;
+    std::chrono::milliseconds start = Now();
+    int64_t allTime = 0;
     while (1){
         Run();
         ll nowCost = getCost();
@@ -529,9 +529,8 @@ void RUN(){
             BestDc = DC;
             BestEc = EC;
         }
-        maxTime = max((Now() - pre).count() + 500, maxTime);
-        pre = Now();
-        if((Now() - start).count() > 120000 - maxTime)break;
+        if(allTime == 0)allTime = (Now() - start).count(), allTime += 100;
+        if((Now() - start).count() > 120000 - allTime)break;
         //break;
     }
 }
@@ -548,8 +547,8 @@ void Test();
 int main(){
     ios::sync_with_stdio(0);
     cin.tie(0);cout.tie(0);
-    Work();
-    //Test();
+    //Work();
+    Test();
 //    vector<int>v;
 //    for(int i = 0; i < NMAX; i++)v.push_back(i);
 //    int a[NMAX];
